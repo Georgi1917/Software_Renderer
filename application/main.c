@@ -88,8 +88,9 @@ int main(void)
                                 1.0f, 1000.0f);
 
     vec3_f camera = {0.0f, 0.0f, 0.0f};
-    vec3_f look_dir = {0.0f, 0.0f, 1.0f};
-    float_t f_yaw = 0.0f;
+    vec3_f camera_front = {0.0f, 0.0f, 1.0f};
+    vec3_f direction = {0.0f};
+    float_t f_yaw = 90.0f;
     float_t f_pitch = 0.0f;
 
     double_t prev = get_time();
@@ -99,12 +100,16 @@ int main(void)
         double_t curr = get_time();
         double_t dt = curr - prev;
         prev = curr;
-        //printf("Time : %f\r", dt);
 
         clear_buffer(DARKGRAY, back_buffer);
 
-        draw_cube(back_buffer, dt, (vec3_f){1.5f, 1.5f, 5.0f}, proj, camera, &look_dir, f_yaw, f_pitch);
-        //draw_cube(back_buffer, dt, (vec3_f){-3.5f, -1.5f, 5.0f}, proj, camera, &look_dir, f_yaw, f_pitch);
+        direction.x = cosf(convert_to_radians(f_yaw)) * cosf(convert_to_radians(f_pitch));
+        direction.y = sinf(convert_to_radians(f_pitch));
+        direction.z = sinf(convert_to_radians(f_yaw)) * cosf(convert_to_radians(f_pitch));
+        camera_front = normalize(direction);
+
+        draw_cube(back_buffer, dt, (vec3_f){1.5f, 1.5f, 5.0f}, proj, camera, &camera_front);
+        draw_cube(back_buffer, dt, (vec3_f){-3.5f, -1.5f, 5.0f}, proj, camera, &camera_front);
 
         XPutImage(
             display,
@@ -140,33 +145,35 @@ int main(void)
                 camera.y -= 10.0f * dt;
             }
             if (XLookupKeysym(&event.xkey, 0) == XK_Left) {
-                f_yaw += 3.0f * dt;
+                f_yaw += 60.0f * dt;
             }
             if (XLookupKeysym(&event.xkey, 0) == XK_Right) {
-                f_yaw -= 3.0f * dt;
+                f_yaw -= 60.0f * dt;
             }
             if (XLookupKeysym(&event.xkey, 0) == XK_w) {
-                vec3_f forward = mul_vector(look_dir, 5.0f * dt);
+                vec3_f forward = mul_vector(camera_front, 5.0f * dt);
                 camera = add_vectors(camera, forward);
             }
             if (XLookupKeysym(&event.xkey, 0) == XK_s) {
-                vec3_f forward = mul_vector(look_dir, 5.0f * dt);
+                vec3_f forward = mul_vector(camera_front, 5.0f * dt);
                 camera = sub_vectors(camera, forward);
             }
             if (XLookupKeysym(&event.xkey, 0) == XK_a) {
-                camera.x -= 10.0f * dt;
+                vec3_f up = {0.0f, 1.0f, 0.0f};
+                camera = sub_vectors(camera, mul_vector(normalize(calculate_cross_product(camera_front, up)), -10.0f * dt));
             }
             if (XLookupKeysym(&event.xkey, 0) == XK_d) {
-                camera.x += 10.0f * dt;
+                vec3_f up = {0.0f, 1.0f, 0.0f};
+                camera = add_vectors(camera, mul_vector(normalize(calculate_cross_product(camera_front, up)), -10.0f * dt));
             }
             if (XLookupKeysym(&event.xkey, 0) == XK_Up) {
-                f_pitch -= 3.0f * dt;
+                f_pitch += 60.0f * dt;
                 if (f_pitch < -89.0f) {
                     f_pitch = -89.0f;
                 }
             }
             if (XLookupKeysym(&event.xkey, 0) == XK_Down) {
-                f_pitch += 3.0f * dt;
+                f_pitch -= 60.0f * dt;
                 if (f_pitch > 89.0f) {
                     f_pitch = 89.0f;
                 }

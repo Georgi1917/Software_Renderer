@@ -299,8 +299,6 @@ uint8_t triangle_clip_plane(vec3_f plane_p, vec3_f plane_n, triangle_d in_tri, t
 
         out_tri1->color = in_tri.color;
 
-        //out_tri1->p[0] = in_tri.p[0];
-
         out_tri1->p[0] = *inside_points[0];
         out_tri1->p[1] = vector_intersect_plane(plane_p, plane_n, *inside_points[0], *outside_points[0]);
         out_tri1->p[2] = vector_intersect_plane(plane_p, plane_n, *inside_points[0], *outside_points[1]);
@@ -313,27 +311,13 @@ uint8_t triangle_clip_plane(vec3_f plane_p, vec3_f plane_n, triangle_d in_tri, t
         out_tri1->color = in_tri.color;
         out_tri2->color = in_tri.color;
 
-        // out_tri1->p[0] = *inside_points[0];
-        // out_tri1->p[1] = *inside_points[1];
-        // out_tri1->p[2] = vector_intersect_plane(plane_p, plane_n, *inside_points[0], *outside_points[0]);
-
-        // out_tri2->p[0] = *inside_points[0];
-        // out_tri2->p[1] = out_tri1->p[2];
-        // out_tri2->p[2] = vector_intersect_plane(plane_p, plane_n, *inside_points[1], *outside_points[0]);
+        out_tri1->p[0] = *inside_points[0];
+        out_tri1->p[1] = *inside_points[1];
+        out_tri1->p[2] = vector_intersect_plane(plane_p, plane_n, *inside_points[1], *outside_points[0]);
 
         out_tri2->p[0] = *inside_points[0];
-        out_tri2->p[1] = vector_intersect_plane(plane_p, plane_n, *inside_points[1], *outside_points[0]);
-        out_tri2->p[2] = out_tri1->p[2];
-
-        printf("T1: (%f,%f) (%f,%f) (%f,%f)\n",
-            out_tri1->p[0].x, out_tri1->p[0].y,
-            out_tri1->p[1].x, out_tri1->p[1].y,
-            out_tri1->p[2].x, out_tri1->p[2].y);
-
-        printf("T2: (%f,%f) (%f,%f) (%f,%f)\n",
-            out_tri2->p[0].x, out_tri2->p[0].y,
-            out_tri2->p[1].x, out_tri2->p[1].y,
-            out_tri2->p[2].x, out_tri2->p[2].y);
+        out_tri2->p[1] = out_tri1->p[2];
+        out_tri2->p[2] = vector_intersect_plane(plane_p, plane_n, *inside_points[0], *outside_points[0]);
 
         return 2;
     }
@@ -349,7 +333,7 @@ void clear_buffer(pixel_data data, screen_buffer* buffer) {
     }
 }
 
-void draw_cube(screen_buffer* buffer, double_t dt, vec3_f trans, mat4x4_f proj, vec3_f camera_pos, vec3_f* look_dir, float_t f_yaw, float_t f_pitch) {
+void draw_cube(screen_buffer* buffer, double_t dt, vec3_f trans, mat4x4_f proj, vec3_f camera_pos, vec3_f* camera_front) {
     
     static float_t angle = 0.0;
     triangle_d tri[12];
@@ -421,18 +405,8 @@ void draw_cube(screen_buffer* buffer, double_t dt, vec3_f trans, mat4x4_f proj, 
     tri[11].color = GREEN;
 
     vec3_f up = {0.0f, 1.0f, 0.0f};
-    vec3_f target_vec = {0.0f, 0.0f, 1.0f};
 
-    mat4x4_f mat_camera_rot_y = matrix_rotation_y(f_yaw);
-    mat4x4_f mat_camera_rot_x = matrix_rotation_x(f_pitch);
-    mat4x4_f mat_camera = multiply_mat4_mat4(mat_camera_rot_y, mat_camera_rot_x);
-
-    *look_dir = to_cartesian_coords(multiply_vec4_mat4
-                        ((vec4_f){target_vec.x, target_vec.y, target_vec.z, 1.0f}, mat_camera));
-
-    target_vec = add_vectors(camera_pos, *look_dir);
-
-    mat4x4_f view_mat = look_at(camera_pos, target_vec, up);
+    mat4x4_f view_mat = look_at(camera_pos, add_vectors(camera_pos, *camera_front), up);
 
     mat4x4_f trans_mat = matrix_translation(trans.x, trans.y, trans.z);
     mat4x4_f rot_mat_y = matrix_rotation_y(convert_to_radians(angle));
@@ -469,11 +443,6 @@ void draw_cube(screen_buffer* buffer, double_t dt, vec3_f trans, mat4x4_f proj, 
             if (dot > 1.0f) dot = 1.0f;
             if (dot < 0.0f) dot = 0.0f;
 
-            pixel_data new_col = {0};
-            new_col.r = (float_t)tri[i].color.r * dot;
-            new_col.g = (float_t)tri[i].color.g * dot;
-            new_col.b = (float_t)tri[i].color.b * dot;
-
             vec3_f view_point_a = to_cartesian_coords(multiply_vec4_mat4
                                             ((vec4_f){trans_point_a.x, trans_point_a.y, trans_point_a.z, 1.0f}, view_mat));
 
@@ -507,7 +476,7 @@ void draw_cube(screen_buffer* buffer, double_t dt, vec3_f trans, mat4x4_f proj, 
                 new.p[0] = proj_point_a;
                 new.p[1] = proj_point_b;
                 new.p[2] = proj_point_c;
-                new.color = new_col;
+                new.color = to_clip.color;
 
                 tri_to_raster[tri_count++] = new;
             }
@@ -537,13 +506,6 @@ void draw_cube(screen_buffer* buffer, double_t dt, vec3_f trans, mat4x4_f proj, 
 
                 new_tri--;
 
-                // switch(p) {
-                //     case 0: tris_to_add = triangle_clip_plane((vec3_f){0.0f, 0.0f, 0.0f}, (vec3_f){0.0f, 1.0f, 0.0f}, test, &clipped[0], &clipped[1]); break;
-                //     case 1: tris_to_add = triangle_clip_plane((vec3_f){0.0f, (float_t)buffer->height - 1, 0.0f}, (vec3_f){0.0f, -1.0f, 0.0f}, test, &clipped[0], &clipped[1]); break;
-                //     case 2: tris_to_add = triangle_clip_plane((vec3_f){0.0f, 0.0f, 0.0f}, (vec3_f){1.0f, 0.0f, 0.0f}, test, &clipped[0], &clipped[1]); break;
-                //     case 3: tris_to_add = triangle_clip_plane((vec3_f){(float_t)buffer->width - 1, 0.0f, 0.0f}, (vec3_f){-1.0f, 0.0f, 0.0f}, test, &clipped[0], &clipped[1]); break;
-                // }
-
                 switch(p) {
                     case 0: tris_to_add = triangle_clip_plane((vec3_f){0.0f, -1.0f, 0.0f}, (vec3_f){0.0f, 1.0f, 0.0f}, test, &clipped[0], &clipped[1]); break;
                     case 1: tris_to_add = triangle_clip_plane((vec3_f){0.0f, 1.0f, 0.0f}, (vec3_f){0.0f, -1.0f, 0.0f}, test, &clipped[0], &clipped[1]); break;
@@ -572,18 +534,5 @@ void draw_cube(screen_buffer* buffer, double_t dt, vec3_f trans, mat4x4_f proj, 
         free_queue(q);
 
     }
-
-    // for (uint16_t i = 0; i < tri_count; i++) {
-    //     triangle_d t = tri_to_raster[i];
-
-    //     draw_triangle_fill((vec2_f){t.p[0].x, t.p[0].y}, 
-    //                        (vec2_f){t.p[1].x, t.p[1].y},
-    //                        (vec2_f){t.p[2].x, t.p[2].y}, t.color, buffer);
-    //     draw_triangle_wireframe((vec2_f){t.p[0].x, t.p[0].y}, 
-    //                        (vec2_f){t.p[1].x, t.p[1].y},
-    //                        (vec2_f){t.p[2].x, t.p[2].y}, BLACK, buffer);
-    // }
-
-    //angle += dt * 10.0;
 
 }
