@@ -1,5 +1,3 @@
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
 #include <SDL3/SDL.h>
 
 #include <stdint.h>
@@ -14,11 +12,15 @@
 #include "colors.h"
 #include "struct_utils.h"
 
-double_t get_time() {
-    struct timespec t;
-    clock_gettime(CLOCK_MONOTONIC, &t);
+// double_t get_time() {
+//     struct timespec t;
+//     clock_gettime(CLOCK_MONOTONIC, &t);
 
-    return (double_t)t.tv_sec + (double_t)t.tv_nsec * 1e-9;
+//     return (double_t)t.tv_sec + (double_t)t.tv_nsec * 1e-9;
+// }
+
+float_t get_time() {
+    return (float_t)SDL_GetTicks() / 1000.0f + (float_t)SDL_GetTicksNS() * 1e-9;
 }
 
 int main(void)
@@ -92,13 +94,15 @@ int main(void)
     float_t f_yaw = 90.0f;
     float_t f_pitch = 0.0f;
 
-    double_t prev = get_time();
+    float_t prev = get_time();
 
     while (running) {
 
-        double_t curr = get_time();
-        double_t dt = curr - prev;
+        float_t curr = get_time();
+        float_t dt = curr - prev;
         prev = curr;
+
+        printf("Time : %f\r", dt);
 
         while (SDL_PollEvent(&event)) {
 
