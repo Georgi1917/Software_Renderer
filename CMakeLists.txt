@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.20)
 project(app LANGUAGES C)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+find_package(SDL3 CONFIG REQUIRED)
 
 #add_compile_options(-Wall -Wpedantic -Wextra -Werror)
 
