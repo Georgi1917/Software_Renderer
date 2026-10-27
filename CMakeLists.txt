@@ -4,6 +4,7 @@ project(app LANGUAGES C)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 find_package(SDL3 CONFIG REQUIRED)
+find_package(assimp CONFIG REQUIRED)
 
 #add_compile_options(-Wall -Wpedantic -Wextra -Werror)
 

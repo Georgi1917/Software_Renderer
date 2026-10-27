@@ -538,3 +538,16 @@ void draw_cube(screen_buffer* buffer, float_t dt, vec3_f trans, mat4x4_f proj, v
     angle += 10.0f * dt;
 
 }
+
+void load_model(void) {
+    const struct aiScene* scene = aiImportFile(
+        "Pesho",
+        aiProcess_Triangulate
+    );
+
+    if (!scene) {
+        printf("Mesh could not be loaded!\n");
+        return;
+    }
+
+}

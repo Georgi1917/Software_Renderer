@@ -12,13 +12,6 @@
 #include "colors.h"
 #include "struct_utils.h"
 
-// double_t get_time() {
-//     struct timespec t;
-//     clock_gettime(CLOCK_MONOTONIC, &t);
-
-//     return (double_t)t.tv_sec + (double_t)t.tv_nsec * 1e-9;
-// }
-
 float_t get_time() {
     return (float_t)SDL_GetTicks() / 1000.0f + (float_t)SDL_GetTicksNS() * 1e-9;
 }
@@ -95,6 +88,8 @@ int main(void)
     float_t f_pitch = 0.0f;
 
     float_t prev = get_time();
+
+    load_model();
 
     while (running) {
 
