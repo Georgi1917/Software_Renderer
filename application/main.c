@@ -88,8 +88,8 @@ int main(void)
     float_t f_pitch = 0.0f;
 
     float_t prev = get_time();
-
-    load_model();
+    mesh_t mesh = {0};
+    load_model(&mesh);
 
     while (running) {
 
@@ -97,7 +97,7 @@ int main(void)
         float_t dt = curr - prev;
         prev = curr;
 
-        printf("Time : %f\r", dt);
+        //printf("Time : %f\r", dt);
 
         while (SDL_PollEvent(&event)) {
 

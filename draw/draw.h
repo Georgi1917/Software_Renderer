@@ -17,6 +17,19 @@ typedef struct {
     pixel_data color;
 } triangle_d;
 
+typedef struct {
+    vec3_f pos;
+    vec3_f nor;
+} vertex_t;
+
+typedef struct {
+    vertex_t* vertices;
+    uint32_t* indices;
+
+    uint32_t vertex_count;
+    uint32_t index_count;
+} mesh_t;
+
 typedef struct node {
     triangle_d el;
     struct node* next;
@@ -46,6 +59,6 @@ uint8_t triangle_clip_plane(vec3_f plane_p, vec3_f plane_n, triangle_d in_tri, t
 
 void draw_cube(screen_buffer* buffer, float_t dt, vec3_f trans, mat4x4_f proj, vec3_f camera_pos, vec3_f* look_dir);
 
-void load_model(void);
+void load_model(mesh_t* mesh);
 
 #endif //__DRAW_H__
