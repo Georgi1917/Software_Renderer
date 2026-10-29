@@ -16,6 +16,16 @@ float_t get_time() {
     return (float_t)SDL_GetTicks() / 1000.0f + (float_t)SDL_GetTicksNS() * 1e-9;
 }
 
+void visualize_mesh_struct(mesh_t mesh) {
+    printf("Vertices : \n");
+    for(uint32_t i = 0; i < mesh.vertex_count; i++) {
+        printf("Pos : %f %f %f | Nor : %f %f %f\n", 
+            mesh.vertices[i].pos.x, mesh.vertices[i].pos.y, mesh.vertices[i].pos.z,
+            mesh.vertices[i].nor.x, mesh.vertices[i].nor.y, mesh.vertices[i].nor.z
+        );
+    }
+}
+
 int main(void)
 {
     screen_buffer *back_buffer = init_screen_buffer(800, 800);
@@ -89,15 +99,13 @@ int main(void)
 
     float_t prev = get_time();
     mesh_t mesh = {0};
-    load_model(&mesh);
+    load_mesh(&mesh);
 
     while (running) {
 
         float_t curr = get_time();
         float_t dt = curr - prev;
         prev = curr;
-
-        //printf("Time : %f\r", dt);
 
         while (SDL_PollEvent(&event)) {
 
@@ -198,9 +206,10 @@ int main(void)
 
         clear_buffer(DARKGRAY, back_buffer);
 
-        draw_cube(back_buffer, dt, (vec3_f){1.5f, 1.5f, 5.0f}, proj, camera, &camera_front);
+        // draw_cube(back_buffer, dt, (vec3_f){1.5f, 1.5f, 5.0f}, proj, camera, &camera_front);
+        // draw_cube(back_buffer, dt, (vec3_f){-3.5f, -1.5f, 5.0f}, proj, camera, &camera_front);
 
-        draw_cube(back_buffer, dt, (vec3_f){-3.5f, -1.5f, 5.0f}, proj, camera, &camera_front);
+        draw_mesh(back_buffer, &mesh, dt, (vec3_f){0.0f, 0.0f, 5.0f}, proj, camera, camera_front);
 
         if (!SDL_UpdateTexture(
                 texture,
@@ -224,6 +233,7 @@ int main(void)
     SDL_DestroyWindow(window);
     SDL_Quit();
 
+    free_mesh(&mesh);
     free_screen_buffer(back_buffer);
 
     return 0;

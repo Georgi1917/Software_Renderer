@@ -540,11 +540,159 @@ void draw_cube(screen_buffer* buffer, float_t dt, vec3_f trans, mat4x4_f proj, v
 
 }
 
-void load_model(mesh_t* mesh_t) {
+void draw_mesh(screen_buffer* buffer, mesh_t* mesh, float_t dt, vec3_f trans, mat4x4_f proj, vec3_f camera_pos, vec3_f camera_front) {
+
+    vec3_f up = {0.0f, 1.0f, 0.0f};
+
+    mat4x4_f view_mat = look_at(camera_pos, add_vectors(camera_pos, camera_front), up);
+
+    mat4x4_f trans_mat = matrix_translation(trans.x, trans.y, trans.z);
+
+    uint32_t initial_capacity = 4096;
+    uint32_t triangle_count = 0;
+    triangle_d* triangles_to_raster = malloc(sizeof(triangle_d) * initial_capacity);
+
+    for (uint32_t i = 0; i + 2 < mesh->index_count; i += 3) {
+        vertex_t a = mesh->vertices[mesh->indices[i + 0]];
+        vertex_t b = mesh->vertices[mesh->indices[i + 1]];
+        vertex_t c = mesh->vertices[mesh->indices[i + 2]];
+
+        vec3_f point_a = a.pos;
+        vec3_f point_b = b.pos;
+        vec3_f point_c = c.pos;
+
+        vec3_f trans_point_a = to_cartesian_coords(
+            multiply_vec4_mat4((vec4_f){point_a.x, point_a.y, point_a.z, 1.0f}, trans_mat)
+        );
+        vec3_f trans_point_b = to_cartesian_coords(
+            multiply_vec4_mat4((vec4_f){point_b.x, point_b.y, point_b.z, 1.0f}, trans_mat)
+        );
+        vec3_f trans_point_c = to_cartesian_coords(
+            multiply_vec4_mat4((vec4_f){point_c.x, point_c.y, point_c.z, 1.0f}, trans_mat)
+        );
+
+        vec3_f normal = a.nor;
+        //vec3_f normal = calculate_normal(trans_point_a, trans_point_b, trans_point_c);
+
+        float_t cam_dot = calculate_dot_product(
+            normalize(sub_vectors(trans_point_a, camera_pos)), normal);
+
+        if (cam_dot < 0.0f) {
+
+            vec3_f view_point_a = to_cartesian_coords(multiply_vec4_mat4
+                                            ((vec4_f){trans_point_a.x, trans_point_a.y, trans_point_a.z, 1.0f}, view_mat));
+
+            vec3_f view_point_b = to_cartesian_coords(multiply_vec4_mat4
+                                            ((vec4_f){trans_point_b.x, trans_point_b.y, trans_point_b.z, 1.0f}, view_mat));
+                                            
+            vec3_f view_point_c = to_cartesian_coords(multiply_vec4_mat4
+                                            ((vec4_f){trans_point_c.x, trans_point_c.y, trans_point_c.z, 1.0f}, view_mat));
+
+            triangle_d to_clip = {0};
+            to_clip.p[0] = view_point_a;
+            to_clip.p[1] = view_point_b;
+            to_clip.p[2] = view_point_c;
+
+            uint8_t num_clipped = 0;
+            triangle_d clipped[2];
+
+            num_clipped = triangle_clip_plane((vec3_f){0.0f, 0.0f, 1.0f}, (vec3_f){0.0f, 0.0f, 1.0f}, to_clip, &clipped[0], &clipped[1]);
+
+            for (uint8_t j = 0; j < num_clipped; j++) {
+
+                vec3_f proj_point_a = to_cartesian_coords(multiply_vec4_mat4
+                                                ((vec4_f){clipped[j].p[0].x, clipped[j].p[0].y, clipped[j].p[0].z, 1.0f}, proj));
+                vec3_f proj_point_b = to_cartesian_coords(multiply_vec4_mat4
+                                                ((vec4_f){clipped[j].p[1].x, clipped[j].p[1].y, clipped[j].p[1].z, 1.0f}, proj));
+                vec3_f proj_point_c = to_cartesian_coords(multiply_vec4_mat4
+                                                ((vec4_f){clipped[j].p[2].x, clipped[j].p[2].y, clipped[j].p[2].z, 1.0f}, proj));
+
+                triangle_d new = {0.0f};
+                new.p[0] = proj_point_a;
+                new.p[1] = proj_point_b;
+                new.p[2] = proj_point_c;
+                new.color = WHITE;
+
+                if (triangle_count >= initial_capacity) {
+                    initial_capacity *= 2;
+                    triangle_d* tmp = realloc(triangles_to_raster, sizeof(triangle_d) * initial_capacity);
+                    if (!tmp) {
+                        perror("Error while reallocating triangle array!\n");
+                        return;
+                    }
+                    triangles_to_raster = tmp;
+                }
+
+                triangles_to_raster[triangle_count++] = new;
+
+            }
+
+        }
+
+    }
+
+    for (uint32_t i = 0; i < triangle_count; i++) {
+        triangle_d tri = triangles_to_raster[i];
+
+        triangle_d clipped[2];
+        tr_queue* q = init_queue();
+        enqueue(q, tri);
+
+        int32_t new_tri = 1;
+
+        for (uint8_t p = 0; p < 4; p++) {
+            uint8_t tris_to_add = 0;
+            if (tris_to_add != 0) {
+                printf("To add : %d\n", tris_to_add);
+            }
+
+            while (new_tri > 0) {
+                triangle_d test = {0.0f};
+                front(q, &test);
+                dequeue(q);
+
+                new_tri--;
+
+                switch(p) {
+                    case 0: tris_to_add = triangle_clip_plane((vec3_f){0.0f, -1.0f, 0.0f}, (vec3_f){0.0f, 1.0f, 0.0f}, test, &clipped[0], &clipped[1]); break;
+                    case 1: tris_to_add = triangle_clip_plane((vec3_f){0.0f, 1.0f, 0.0f}, (vec3_f){0.0f, -1.0f, 0.0f}, test, &clipped[0], &clipped[1]); break;
+                    case 2: tris_to_add = triangle_clip_plane((vec3_f){-1.0f, 0.0f, 0.0f}, (vec3_f){1.0f, 0.0f, 0.0f}, test, &clipped[0], &clipped[1]); break;
+                    case 3: tris_to_add = triangle_clip_plane((vec3_f){1.0f, 0.0f, 0.0f}, (vec3_f){-1.0f, 0.0f, 0.0f}, test, &clipped[0], &clipped[1]); break;
+                }
+
+                for (uint16_t w = 0; w < tris_to_add; w++) {
+                    enqueue(q, clipped[w]);
+                }
+            }
+            new_tri = q->size;
+        }
+
+        for (node* curr = q->head; curr != NULL; curr = curr->next) {
+            triangle_d t = curr->el;
+
+            draw_triangle_fill((vec2_f){t.p[0].x, t.p[0].y}, 
+                           (vec2_f){t.p[1].x, t.p[1].y},
+                           (vec2_f){t.p[2].x, t.p[2].y}, t.color, buffer);
+            // for debugging only
+            draw_triangle_wireframe((vec2_f){t.p[0].x, t.p[0].y}, 
+                           (vec2_f){t.p[1].x, t.p[1].y},
+                           (vec2_f){t.p[2].x, t.p[2].y}, BLACK, buffer);
+        }
+
+        free_queue(q);
+
+    }
+
+    free(triangles_to_raster);
+
+}
+
+void load_mesh(mesh_t* mesh_t) {
     const struct aiScene* scene = aiImportFile(
-        "assets/teapot.obj",
+        "assets/backpack.obj",
         aiProcess_Triangulate |
-        aiProcess_JoinIdenticalVertices
+        aiProcess_JoinIdenticalVertices |
+        aiProcess_FlipWindingOrder
     );
 
     if (!scene) {
@@ -588,6 +736,8 @@ void load_model(mesh_t* mesh_t) {
     for (uint32_t i = 0; i < scene->mNumMeshes; i++) {
         const struct aiMesh* mesh = scene->mMeshes[i];
 
+        uint32_t ver_idx_base = ver_idx;
+
         for (uint32_t j = 0; j < mesh->mNumVertices; j++) {
             vertex_t vec = {0};
             vec.pos = (vec3_f){mesh->mVertices[j].x, mesh->mVertices[j].y, mesh->mVertices[j].z};
@@ -612,15 +762,23 @@ void load_model(mesh_t* mesh_t) {
 
             for (uint32_t f = 0; f < 3; f++) {
                 // if (ind_idx >= mesh_t->index_count) {
-                //     // ind_idx++;
-                //     // printf("End of Line reached. Idx : %d\n", ind_idx);
+                //     printf("End of Line reached. Idx : %d\n", ind_idx);
                 //     continue;
                 // }
-                mesh_t->indices[ind_idx++] = face.mIndices[f];
+                mesh_t->indices[ind_idx++] = ver_idx_base + face.mIndices[f];
             } 
 
         }
 
     }
 
+}
+
+void free_mesh(mesh_t* mesh) {
+    free(mesh->vertices);
+    free(mesh->indices);
+    mesh->vertices = NULL;
+    mesh->indices = NULL;
+    mesh->vertex_count = 0;
+    mesh->index_count = 0;
 }
