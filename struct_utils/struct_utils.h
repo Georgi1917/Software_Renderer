@@ -7,6 +7,7 @@
 
 typedef struct {
     uint8_t* mem;
+    float_t* z_buffer;
     uint16_t width;
     uint16_t height;
 } screen_buffer;

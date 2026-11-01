@@ -14,8 +14,9 @@ screen_buffer* init_screen_buffer(uint16_t width, uint16_t height) {
     buff->width = width;
     buff->height = height;
     buff->mem = calloc((buff->width * buff->height * 4), sizeof(uint8_t));
+    buff->z_buffer = calloc((buff->width * buff->height), sizeof(float_t));
 
-    if (!buff->mem) {
+    if (!buff->mem || !buff->z_buffer) {
         perror("Error while allocating internal buffer.\n");
         free(buff);
         return NULL;
@@ -32,13 +33,14 @@ void free_screen_buffer(screen_buffer* buff) {
         return;
     }
 
-    if (!buff->mem) {
+    if (!buff->mem || !buff->z_buffer) {
         perror("Error while freeing internal screen buffer.\n");
         free(buff);
         return;
     }
 
     free(buff->mem);
+    free(buff->z_buffer);
     free(buff);
 }
 

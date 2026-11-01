@@ -16,17 +16,17 @@ vec2_i _denormalize_point_coords(vec2_f p, uint16_t max_val_x, uint16_t max_val_
     return ret_point;
 }
 
-list_f* _linear_interpolation(int16_t i0, int16_t d0, int16_t i1, int16_t d1) {
+list_f* _linear_interpolation(int16_t i0, float_t d0, int16_t i1, float_t d1) {
 
     list_f* values = init_list();
 
     if (i0 == i1) {
-        append_el(values, (float_t)d0);
+        append_el(values, d0);
         return values;
     }
 
-    float_t a = (float_t)(d1 - d0) / (float_t)(i1 - i0);
-    float_t d = (float_t)d0;
+    float_t a = (d1 - d0) / (float_t)(i1 - i0);
+    float_t d = d0;
 
     for (int16_t i = i0; i <= i1; i++) {
         append_el(values, d);
@@ -241,6 +241,88 @@ void draw_triangle_fill(vec2_f p0, vec2_f p1, vec2_f p2, pixel_data p_data, scre
 
     for (int i = 0; i < x12->count; i++) {
         append_el(x012, x12->data[i]);
+    }
+
+    uint16_t mid = x02->count / 2;
+
+    if (x02->data[mid] < x012->data[mid]) {
+
+        for (int16_t y = p0n.y; y < p2n.y; y++) {
+            for (int16_t x = (int16_t)x02->data[y - p0n.y]; x < x012->data[y - p0n.y]; x++) {
+                put_pixel(x, y, buffer, p_data);
+            }
+        }
+
+    }
+    else {
+
+        for (int16_t y = p0n.y; y < p2n.y; y++) {
+            for (int16_t x = (int16_t)x012->data[y - p0n.y]; x < x02->data[y - p0n.y]; x++) {
+                put_pixel(x, y, buffer, p_data);
+            }
+        }
+    }
+
+    free_list(x01);
+    free_list(x12);
+    free_list(x02);
+    free_list(x012);
+
+}
+
+void draw_triangle_depth(vec3_f p0, vec3_f p1, vec3_f p2, pixel_data p_data, screen_buffer* buffer) {
+    vec2_i p0n = _denormalize_point_coords((vec2_f){p0.x, p0.y}, buffer->width, buffer->height);
+    vec2_i p1n = _denormalize_point_coords((vec2_f){p1.x, p1.y}, buffer->width, buffer->height);
+    vec2_i p2n = _denormalize_point_coords((vec2_f){p2.x, p2.y}, buffer->width, buffer->height);
+
+    if (p1n.y < p0n.y) { 
+        _swap_points(&p1n, &p0n);
+        float_t tmp = p1.z;
+        p1.z = p0.z;
+        p0.z = tmp; 
+    }
+    if (p2n.y < p0n.y) { 
+        _swap_points(&p2n, &p0n);
+        float_t tmp = p2.z;
+        p2.z = p0.z;
+        p0.z = tmp; 
+    }
+    if (p2n.y < p1n.y) { 
+        _swap_points(&p2n, &p1n);
+        float_t tmp = p2.z;
+        p2.z = p1.z;
+        p1.z = tmp; 
+    }
+
+    list_f* x01 = _linear_interpolation(p0n.y, p0n.x, p1n.y, p1n.x);
+    list_f* z01 = _linear_interpolation(p0n.y, p0.z, p1n.y, p1.z);
+
+    list_f* x12 = _linear_interpolation(p1n.y, p1n.x, p2n.y, p2n.x);
+    list_f* z12 = _linear_interpolation(p1n.y, p1.z, p2n.y, p2.z);
+
+    list_f* x02 = _linear_interpolation(p0n.y, p0n.x, p2n.y, p2n.x);
+    list_f* z02 = _linear_interpolation(p0n.y, p0.z, p2n.y, p2.z);
+
+    pop_back(x01);
+    pop_back(z01);
+
+    list_f* x012 = init_list();
+    list_f* z012 = init_list();
+
+    for (uint16_t i = 0; i < x01->count; i++) {
+        append_el(x012, x01->data[i]);
+    }
+
+    for (uint16_t i = 0; i < x12->count; i++) {
+        append_el(x012, x12->data[i]);
+    }
+
+    for (uint16_t i = 0; i < z01->count; i++) {
+        append_el(z012, z01->data[i]);
+    }
+
+    for (uint16_t i = 0; i < z12->count; i++) {
+        append_el(z012, z12->data[i]);
     }
 
     uint16_t mid = x02->count / 2;
@@ -689,7 +771,7 @@ void draw_mesh(screen_buffer* buffer, mesh_t* mesh, float_t dt, vec3_f trans, ma
 
 void load_mesh(mesh_t* mesh_t) {
     const struct aiScene* scene = aiImportFile(
-        "assets/backpack.obj",
+        "assets/teapot.obj",
         aiProcess_Triangulate |
         aiProcess_JoinIdenticalVertices |
         aiProcess_FlipWindingOrder
