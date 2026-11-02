@@ -243,7 +243,7 @@ void draw_triangle_fill(vec2_f p0, vec2_f p1, vec2_f p2, pixel_data p_data, scre
         append_el(x012, x12->data[i]);
     }
 
-    uint16_t mid = x02->count / 2;
+    uint16_t mid = x012->count / 2;
 
     if (x02->data[mid] < x012->data[mid]) {
 
@@ -308,6 +308,7 @@ void draw_triangle_depth(vec3_f p0, vec3_f p1, vec3_f p2, pixel_data p_data, scr
 
     list_f* x012 = init_list();
     list_f* z012 = init_list();
+    list_f* z_segment = NULL;
 
     for (uint16_t i = 0; i < x01->count; i++) {
         append_el(x012, x01->data[i]);
@@ -325,22 +326,58 @@ void draw_triangle_depth(vec3_f p0, vec3_f p1, vec3_f p2, pixel_data p_data, scr
         append_el(z012, z12->data[i]);
     }
 
-    uint16_t mid = x02->count / 2;
+    uint16_t mid = x012->count / 2;
 
     if (x02->data[mid] < x012->data[mid]) {
 
+        // x_left = x02
+        // h_left = z02
+
+        // x_right = x012
+        // h_right = z012
+        
+        // x_l = x_left[y - y0]
+        // x_r = x_right[y - y0]
+
         for (int16_t y = p0n.y; y < p2n.y; y++) {
+
+            z_segment = _linear_interpolation(x02->data[y - p0n.y], z02->data[y - p0n.y], 
+                                              x012->data[y - p0n.y], z012->data[y - p0n.y]);
+
             for (int16_t x = (int16_t)x02->data[y - p0n.y]; x < x012->data[y - p0n.y]; x++) {
-                put_pixel(x, y, buffer, p_data);
+                float_t z = z_segment->data[x - (int16_t)x02->data[y - p0n.y]];
+
+                if (z < buffer->z_buffer[x + buffer->width * y]) {
+                    buffer->z_buffer[x + y * buffer->width] = z;
+                    put_pixel(x, y, buffer, p_data);
+                }
             }
         }
 
     }
     else {
 
+        // x_left = x012
+        // h_left = h012
+
+        // x_right = x02
+        // h_right = h02
+
+        // x_l = x_left[y - y0]
+        // x_r = x_right[y - y0]
+
         for (int16_t y = p0n.y; y < p2n.y; y++) {
+
+            z_segment = _linear_interpolation(x012->data[y - p0n.y], z012->data[y - p0n.y],
+                                              x02->data[y - p0n.y], z02->data[y - p0n.y]);
+
             for (int16_t x = (int16_t)x012->data[y - p0n.y]; x < x02->data[y - p0n.y]; x++) {
-                put_pixel(x, y, buffer, p_data);
+                float_t z = z_segment->data[x - (int16_t)x012->data[y - p0n.y]];
+
+                if (z < buffer->z_buffer[x + buffer->width * y]) {
+                    buffer->z_buffer[x + y * buffer->width] = z;
+                    put_pixel(x, y, buffer, p_data);
+                }
             }
         }
     }
@@ -752,9 +789,12 @@ void draw_mesh(screen_buffer* buffer, mesh_t* mesh, float_t dt, vec3_f trans, ma
         for (node* curr = q->head; curr != NULL; curr = curr->next) {
             triangle_d t = curr->el;
 
-            draw_triangle_fill((vec2_f){t.p[0].x, t.p[0].y}, 
-                           (vec2_f){t.p[1].x, t.p[1].y},
-                           (vec2_f){t.p[2].x, t.p[2].y}, t.color, buffer);
+            // fill triangle without depth
+            // draw_triangle_fill((vec2_f){t.p[0].x, t.p[0].y}, 
+            //                (vec2_f){t.p[1].x, t.p[1].y},
+            //                (vec2_f){t.p[2].x, t.p[2].y}, t.color, buffer);
+            // fill triangle with depth
+            draw_triangle_depth(t.p[0], t.p[1], t.p[2], t.color, buffer);
             // for debugging only
             draw_triangle_wireframe((vec2_f){t.p[0].x, t.p[0].y}, 
                            (vec2_f){t.p[1].x, t.p[1].y},
