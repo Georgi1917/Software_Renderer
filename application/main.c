@@ -209,7 +209,8 @@ int main(void)
         // draw_cube(back_buffer, dt, (vec3_f){1.5f, 1.5f, 5.0f}, proj, camera, &camera_front);
         // draw_cube(back_buffer, dt, (vec3_f){-3.5f, -1.5f, 5.0f}, proj, camera, &camera_front);
 
-        draw_mesh(back_buffer, &mesh, dt, (vec3_f){0.0f, 0.0f, 5.0f}, proj, camera, camera_front);
+        draw_mesh(back_buffer, &mesh, dt, (vec3_f){0.0f, 0.0f, 5.0f}, proj, camera, camera_front, RED);
+        draw_mesh(back_buffer, &mesh, dt, (vec3_f){5.0f, 0.0f, 5.0f}, proj, camera, camera_front, WHITE);
 
         if (!SDL_UpdateTexture(
                 texture,

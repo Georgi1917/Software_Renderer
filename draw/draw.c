@@ -448,8 +448,10 @@ void clear_buffer(pixel_data data, screen_buffer* buffer) {
     for (uint16_t y = 0; y < buffer->height; y++) {
         for (uint16_t x = 0; x < buffer->width; x++) {
             put_pixel(x, y, buffer, data);
+            buffer->z_buffer[x + y * buffer->width] = 1000.0f;
         }
     }
+
 }
 
 void draw_cube(screen_buffer* buffer, float_t dt, vec3_f trans, mat4x4_f proj, vec3_f camera_pos, vec3_f* camera_front) {
@@ -642,9 +644,10 @@ void draw_cube(screen_buffer* buffer, float_t dt, vec3_f trans, mat4x4_f proj, v
         for (node* curr = q->head; curr != NULL; curr = curr->next) {
             triangle_d t = curr->el;
 
-            draw_triangle_fill((vec2_f){t.p[0].x, t.p[0].y}, 
-                           (vec2_f){t.p[1].x, t.p[1].y},
-                           (vec2_f){t.p[2].x, t.p[2].y}, t.color, buffer);
+            // draw_triangle_fill((vec2_f){t.p[0].x, t.p[0].y}, 
+            //                (vec2_f){t.p[1].x, t.p[1].y},
+            //                (vec2_f){t.p[2].x, t.p[2].y}, t.color, buffer);
+            draw_triangle_depth(t.p[0], t.p[1], t.p[2], t.color, buffer);
             // for debugging only
             // draw_triangle_wireframe((vec2_f){t.p[0].x, t.p[0].y}, 
             //                (vec2_f){t.p[1].x, t.p[1].y},
@@ -659,7 +662,7 @@ void draw_cube(screen_buffer* buffer, float_t dt, vec3_f trans, mat4x4_f proj, v
 
 }
 
-void draw_mesh(screen_buffer* buffer, mesh_t* mesh, float_t dt, vec3_f trans, mat4x4_f proj, vec3_f camera_pos, vec3_f camera_front) {
+void draw_mesh(screen_buffer* buffer, mesh_t* mesh, float_t dt, vec3_f trans, mat4x4_f proj, vec3_f camera_pos, vec3_f camera_front, pixel_data color) {
 
     vec3_f up = {0.0f, 1.0f, 0.0f};
 
@@ -730,7 +733,7 @@ void draw_mesh(screen_buffer* buffer, mesh_t* mesh, float_t dt, vec3_f trans, ma
                 new.p[0] = proj_point_a;
                 new.p[1] = proj_point_b;
                 new.p[2] = proj_point_c;
-                new.color = WHITE;
+                new.color = color;
 
                 if (triangle_count >= initial_capacity) {
                     initial_capacity *= 2;
@@ -789,16 +792,17 @@ void draw_mesh(screen_buffer* buffer, mesh_t* mesh, float_t dt, vec3_f trans, ma
         for (node* curr = q->head; curr != NULL; curr = curr->next) {
             triangle_d t = curr->el;
 
-            // fill triangle without depth
-            // draw_triangle_fill((vec2_f){t.p[0].x, t.p[0].y}, 
-            //                (vec2_f){t.p[1].x, t.p[1].y},
-            //                (vec2_f){t.p[2].x, t.p[2].y}, t.color, buffer);
-            // fill triangle with depth
-            draw_triangle_depth(t.p[0], t.p[1], t.p[2], t.color, buffer);
-            // for debugging only
-            draw_triangle_wireframe((vec2_f){t.p[0].x, t.p[0].y}, 
+            //fill triangle without depth
+
+            draw_triangle_fill((vec2_f){t.p[0].x, t.p[0].y}, 
                            (vec2_f){t.p[1].x, t.p[1].y},
-                           (vec2_f){t.p[2].x, t.p[2].y}, BLACK, buffer);
+                           (vec2_f){t.p[2].x, t.p[2].y}, t.color, buffer);
+            // fill triangle with depth
+            //draw_triangle_depth(t.p[0], t.p[1], t.p[2], t.color, buffer);
+            // for debugging only
+            // draw_triangle_wireframe((vec2_f){t.p[0].x, t.p[0].y}, 
+            //                (vec2_f){t.p[1].x, t.p[1].y},
+            //                (vec2_f){t.p[2].x, t.p[2].y}, BLACK, buffer);
         }
 
         free_queue(q);
