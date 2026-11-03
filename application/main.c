@@ -98,8 +98,7 @@ int main(void)
     float_t f_pitch = 0.0f;
 
     float_t prev = get_time();
-    mesh_t mesh = {0};
-    load_mesh(&mesh);
+    mesh_t* mesh = load_mesh("assets/teapot.obj");
 
     while (running) {
 
@@ -206,11 +205,9 @@ int main(void)
 
         clear_buffer(DARKGRAY, back_buffer);
 
-        // draw_cube(back_buffer, dt, (vec3_f){1.5f, 1.5f, 5.0f}, proj, camera, &camera_front);
-        // draw_cube(back_buffer, dt, (vec3_f){-3.5f, -1.5f, 5.0f}, proj, camera, &camera_front);
-
-        draw_mesh(back_buffer, &mesh, dt, (vec3_f){0.0f, 0.0f, 5.0f}, proj, camera, camera_front, RED);
-        draw_mesh(back_buffer, &mesh, dt, (vec3_f){5.0f, 0.0f, 5.0f}, proj, camera, camera_front, WHITE);
+        draw_cube(back_buffer, dt, (vec3_f){0.0f, 0.0f, 5.0f}, proj, camera, &camera_front);
+        draw_cube(back_buffer, dt, (vec3_f){5.0f, 0.0f, 5.0f}, proj, camera, &camera_front);
+        printf("Time : %f\r", dt);
 
         if (!SDL_UpdateTexture(
                 texture,
@@ -234,7 +231,7 @@ int main(void)
     SDL_DestroyWindow(window);
     SDL_Quit();
 
-    free_mesh(&mesh);
+    free_mesh(mesh);
     free_screen_buffer(back_buffer);
 
     return 0;

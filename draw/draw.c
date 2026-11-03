@@ -643,15 +643,7 @@ void draw_cube(screen_buffer* buffer, float_t dt, vec3_f trans, mat4x4_f proj, v
 
         for (node* curr = q->head; curr != NULL; curr = curr->next) {
             triangle_d t = curr->el;
-
-            // draw_triangle_fill((vec2_f){t.p[0].x, t.p[0].y}, 
-            //                (vec2_f){t.p[1].x, t.p[1].y},
-            //                (vec2_f){t.p[2].x, t.p[2].y}, t.color, buffer);
             draw_triangle_depth(t.p[0], t.p[1], t.p[2], t.color, buffer);
-            // for debugging only
-            // draw_triangle_wireframe((vec2_f){t.p[0].x, t.p[0].y}, 
-            //                (vec2_f){t.p[1].x, t.p[1].y},
-            //                (vec2_f){t.p[2].x, t.p[2].y}, BLACK, buffer);
         }
 
         free_queue(q);
@@ -694,7 +686,6 @@ void draw_mesh(screen_buffer* buffer, mesh_t* mesh, float_t dt, vec3_f trans, ma
         );
 
         vec3_f normal = a.nor;
-        //vec3_f normal = calculate_normal(trans_point_a, trans_point_b, trans_point_c);
 
         float_t cam_dot = calculate_dot_product(
             normalize(sub_vectors(trans_point_a, camera_pos)), normal);
@@ -792,17 +783,12 @@ void draw_mesh(screen_buffer* buffer, mesh_t* mesh, float_t dt, vec3_f trans, ma
         for (node* curr = q->head; curr != NULL; curr = curr->next) {
             triangle_d t = curr->el;
 
-            //fill triangle without depth
+            draw_triangle_depth(t.p[0], t.p[1], t.p[2], t.color, buffer);
 
-            draw_triangle_fill((vec2_f){t.p[0].x, t.p[0].y}, 
-                           (vec2_f){t.p[1].x, t.p[1].y},
-                           (vec2_f){t.p[2].x, t.p[2].y}, t.color, buffer);
-            // fill triangle with depth
-            //draw_triangle_depth(t.p[0], t.p[1], t.p[2], t.color, buffer);
             // for debugging only
-            // draw_triangle_wireframe((vec2_f){t.p[0].x, t.p[0].y}, 
-            //                (vec2_f){t.p[1].x, t.p[1].y},
-            //                (vec2_f){t.p[2].x, t.p[2].y}, BLACK, buffer);
+            draw_triangle_wireframe((vec2_f){t.p[0].x, t.p[0].y}, 
+                           (vec2_f){t.p[1].x, t.p[1].y},
+                           (vec2_f){t.p[2].x, t.p[2].y}, BLACK, buffer);
         }
 
         free_queue(q);
@@ -813,9 +799,12 @@ void draw_mesh(screen_buffer* buffer, mesh_t* mesh, float_t dt, vec3_f trans, ma
 
 }
 
-void load_mesh(mesh_t* mesh_t) {
+mesh_t* load_mesh(const char* filepath) {
+
+    mesh_t* mesh_t = calloc(1, sizeof(mesh_t));
+
     const struct aiScene* scene = aiImportFile(
-        "assets/teapot.obj",
+        filepath,
         aiProcess_Triangulate |
         aiProcess_JoinIdenticalVertices |
         aiProcess_FlipWindingOrder
@@ -823,7 +812,7 @@ void load_mesh(mesh_t* mesh_t) {
 
     if (!scene) {
         printf("Mesh could not be loaded!\n");
-        return;
+        return NULL;
     }
 
     printf("Mesh number : %d\n", scene->mNumMeshes);
@@ -887,10 +876,6 @@ void load_mesh(mesh_t* mesh_t) {
             }
 
             for (uint32_t f = 0; f < 3; f++) {
-                // if (ind_idx >= mesh_t->index_count) {
-                //     printf("End of Line reached. Idx : %d\n", ind_idx);
-                //     continue;
-                // }
                 mesh_t->indices[ind_idx++] = ver_idx_base + face.mIndices[f];
             } 
 
@@ -898,13 +883,12 @@ void load_mesh(mesh_t* mesh_t) {
 
     }
 
+    return mesh_t;
+
 }
 
 void free_mesh(mesh_t* mesh) {
     free(mesh->vertices);
     free(mesh->indices);
-    mesh->vertices = NULL;
-    mesh->indices = NULL;
-    mesh->vertex_count = 0;
-    mesh->index_count = 0;
+    free(mesh);
 }

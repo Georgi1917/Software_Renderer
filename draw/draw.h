@@ -61,7 +61,7 @@ uint8_t triangle_clip_plane(vec3_f plane_p, vec3_f plane_n, triangle_d in_tri, t
 void draw_cube(screen_buffer* buffer, float_t dt, vec3_f trans, mat4x4_f proj, vec3_f camera_pos, vec3_f* look_dir);
 void draw_mesh(screen_buffer* buffer, mesh_t* mesh, float_t dt, vec3_f trans, mat4x4_f proj, vec3_f camera_pos, vec3_f camera_front, pixel_data color);
 
-void load_mesh(mesh_t* mesh);
+mesh_t* load_mesh(const char* filepath);
 void free_mesh(mesh_t* mesh);
 
 
