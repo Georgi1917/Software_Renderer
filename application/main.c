@@ -9,6 +9,7 @@
 #include <time.h>
 
 #include "draw.h"
+#include "texture.h"
 #include "colors.h"
 #include "struct_utils.h"
 
@@ -98,7 +99,10 @@ int main(void)
     float_t f_pitch = 0.0f;
 
     float_t prev = get_time();
-    mesh_t* mesh = load_mesh("assets/teapot.obj");
+    texture_t* tex = load_texture("assets/wall.jpg");
+    pixel_data col = sample_color(tex, 1, 1);
+
+    printf("Color : r %d g %d b %d\n", col.r, col.g, col.b);
 
     while (running) {
 
@@ -205,8 +209,8 @@ int main(void)
 
         clear_buffer(DARKGRAY, back_buffer);
 
-        draw_cube(back_buffer, dt, (vec3_f){0.0f, 0.0f, 5.0f}, proj, camera, &camera_front);
-        draw_cube(back_buffer, dt, (vec3_f){5.0f, 0.0f, 5.0f}, proj, camera, &camera_front);
+        draw_cube(back_buffer, dt, (vec3_f){0.0f, 0.0f, 5.0f}, proj, camera, camera_front);
+        draw_cube(back_buffer, dt, (vec3_f){5.0f, 0.0f, 5.0f}, proj, camera, camera_front);
         printf("Time : %f\r", dt);
 
         if (!SDL_UpdateTexture(
@@ -231,7 +235,7 @@ int main(void)
     SDL_DestroyWindow(window);
     SDL_Quit();
 
-    free_mesh(mesh);
+    //free_mesh(mesh);
     free_screen_buffer(back_buffer);
 
     return 0;

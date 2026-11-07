@@ -1,8 +1,6 @@
 #ifndef __COLORS_H__
 #define __COLORS_H__
 
-#include "draw.h"
-
 #define LIGHTGRAY  (pixel_data){ 200, 200, 200 }
 #define GRAY       (pixel_data){ 130, 130, 130 }        // Gray
 #define DARKGRAY   (pixel_data){ 80, 80, 80 }      // Dark Gray

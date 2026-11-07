@@ -1,4 +1,4 @@
-add_library(cc_draw_static STATIC draw.c)
+add_library(cc_draw_static STATIC draw.c stb_image_impl_vendor.c texture.c)
 add_library(cc_colors INTERFACE)
 
 target_include_directories(cc_draw_static PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

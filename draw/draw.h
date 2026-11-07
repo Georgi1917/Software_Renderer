@@ -58,7 +58,7 @@ void draw_triangle_depth(vec3_f p0, vec3_f p1, vec3_f p2, pixel_data p_data, scr
 
 uint8_t triangle_clip_plane(vec3_f plane_p, vec3_f plane_n, triangle_d in_tri, triangle_d* out_tri1, triangle_d* out_tri2);
 
-void draw_cube(screen_buffer* buffer, float_t dt, vec3_f trans, mat4x4_f proj, vec3_f camera_pos, vec3_f* look_dir);
+void draw_cube(screen_buffer* buffer, float_t dt, vec3_f trans, mat4x4_f proj, vec3_f camera_pos, vec3_f camera_front);
 void draw_mesh(screen_buffer* buffer, mesh_t* mesh, float_t dt, vec3_f trans, mat4x4_f proj, vec3_f camera_pos, vec3_f camera_front, pixel_data color);
 
 mesh_t* load_mesh(const char* filepath);
