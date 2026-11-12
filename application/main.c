@@ -30,7 +30,6 @@ void visualize_mesh_struct(mesh_t mesh) {
 int main(void)
 {
     screen_buffer *back_buffer = init_screen_buffer(800, 800);
-    initialize_renderer();
 
     if (back_buffer == NULL) {
         fprintf(stderr, "Could not create screen buffer\n");
@@ -238,7 +237,6 @@ int main(void)
 
     //free_mesh(mesh);
     free_screen_buffer(back_buffer);
-    destroy_renderer();
 
     return 0;
 }

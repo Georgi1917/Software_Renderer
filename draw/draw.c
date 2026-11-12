@@ -7,51 +7,80 @@
 
 #define PI 3.1415926535
 
-list_f* x01;
-list_f* x12;
-list_f* x02;
-list_f* x012;
+// ################################################################### //
 
-list_f* z01;
-list_f* z12;
-list_f* z02;
-list_f* z012;
+tr_queue* init_queue() {
+    tr_queue* q = malloc(sizeof(tr_queue));
+    q->head = NULL;
+    q->tail = NULL;
+    q->size = 0;
 
-void initialize_renderer() {
-    x01  = init_list_size(1024);
-    x12  = init_list_size(1024);
-    x02  = init_list_size(1024);
-    x012 = init_list_size(1024);
-
-    z01 = init_list_size(1024);
-    z12 = init_list_size(1024);
-    z02 = init_list_size(1024);
-    z012 = init_list_size(1024);
+    return q;
 }
 
-void destroy_renderer() {
-    free_list(x01);
-    free_list(x12);
-    free_list(x02);
-    free_list(x012);
+void enqueue(tr_queue* q, triangle_d el) {
+    node* new = malloc(sizeof(node));
+    new->el = el;
+    new->next = NULL;
 
-    free_list(z01);
-    free_list(z12);
-    free_list(z02);
-    free_list(z012);
+    if (q->tail != NULL) {
+        q->tail->next = new;
+    }
+    q->tail = new;
+
+    if (q->head == NULL) {
+        q->head = new;
+    }
+    q->size++;
 }
 
-void _zero_arrays_count() {
-    x01->count = 0;
-    x12->count = 0;
-    x02->count = 0;
-    x012->count = 0;
+void dequeue(tr_queue* q) {
 
-    z01->count = 0;
-    z12->count = 0;
-    z02->count = 0;
-    z012->count = 0;
+    if (q->head == NULL) {
+        perror("Head is empty!\n");
+        return;
+    }
+
+    node* tmp = q->head;
+    q->head = q->head->next;
+
+    if (q->head == NULL) {
+        q->tail = NULL;
+    }
+    free(tmp);
+    q->size--;
+
 }
+
+void front(tr_queue* q, triangle_d* tr) {
+
+    if (q->head == NULL) {
+        perror("Head is empty!\n");
+        return;
+    }
+
+    *tr = q->head->el;
+
+}
+
+void free_queue(tr_queue* q) {
+    node* current = q->head;
+
+    while(current != NULL) {
+        node* next = current->next;
+        free(current);
+        current = next;
+    }
+
+    q->head = NULL;
+    q->tail = NULL;
+    q->size = 0;
+
+    free(q);
+
+}
+
+// ################################################################################ //
 
 vec2_i _denormalize_point_coords(vec2_f p, uint16_t max_val_x, uint16_t max_val_y) {
     vec2_i ret_point = {0};
@@ -163,77 +192,6 @@ void _swap_points(vec2_i*a, vec2_i *b) {
     vec2_i temp = *a;
     *a = *b;
     *b = temp;
-
-}
-
-tr_queue* init_queue() {
-    tr_queue* q = malloc(sizeof(tr_queue));
-    q->head = NULL;
-    q->tail = NULL;
-    q->size = 0;
-
-    return q;
-}
-
-void enqueue(tr_queue* q, triangle_d el) {
-    node* new = malloc(sizeof(node));
-    new->el = el;
-    new->next = NULL;
-
-    if (q->tail != NULL) {
-        q->tail->next = new;
-    }
-    q->tail = new;
-
-    if (q->head == NULL) {
-        q->head = new;
-    }
-    q->size++;
-}
-
-void dequeue(tr_queue* q) {
-
-    if (q->head == NULL) {
-        perror("Head is empty!\n");
-        return;
-    }
-
-    node* tmp = q->head;
-    q->head = q->head->next;
-
-    if (q->head == NULL) {
-        q->tail = NULL;
-    }
-    free(tmp);
-    q->size--;
-
-}
-
-void front(tr_queue* q, triangle_d* tr) {
-
-    if (q->head == NULL) {
-        perror("Head is empty!\n");
-        return;
-    }
-
-    *tr = q->head->el;
-
-}
-
-void free_queue(tr_queue* q) {
-    node* current = q->head;
-
-    while(current != NULL) {
-        node* next = current->next;
-        free(current);
-        current = next;
-    }
-
-    q->head = NULL;
-    q->tail = NULL;
-    q->size = 0;
-
-    free(q);
 
 }
 
@@ -454,11 +412,14 @@ void draw_triangle_depth(vec3_f p0, vec3_f p1, vec3_f p2, pixel_data p_data, scr
     free_list(z02);
     free_list(z012);
     
-    free_list(z_segment);
+    if (z_segment) {
+        free_list(z_segment);
+    }
 
 }
 
-void draw_triangle_depth_ex(vec3_f p0, vec3_f p1, vec3_f p2, pixel_data p_data, screen_buffer* buffer) {
+void draw_triangle_depth_pro(vec3_f p0, vec3_f p1, vec3_f p2, pixel_data p_data, screen_buffer* buffer) {
+
     vec2_i p0n = _denormalize_point_coords((vec2_f){p0.x, p0.y}, buffer->width, buffer->height);
     vec2_i p1n = _denormalize_point_coords((vec2_f){p1.x, p1.y}, buffer->width, buffer->height);
     vec2_i p2n = _denormalize_point_coords((vec2_f){p2.x, p2.y}, buffer->width, buffer->height);
@@ -482,93 +443,125 @@ void draw_triangle_depth_ex(vec3_f p0, vec3_f p1, vec3_f p2, pixel_data p_data, 
         p1.z = tmp; 
     }
 
-    _linear_interpolation_ex(p0n.y, p0n.x, p1n.y, p1n.x, x01);
-    _linear_interpolation_ex(p0n.y, p0.z, p1n.y, p1.z, z01);
+    float_t z = 0.0f;
 
-    _linear_interpolation_ex(p1n.y, p1n.x, p2n.y, p2n.x, x12);
-    _linear_interpolation_ex(p1n.y, p1.z, p2n.y, p2.z, z12);
+    int16_t dy1 = p1n.y - p0n.y;
+    int16_t dx1 = p1n.x - p0n.x;
+    float_t dz1 = p1.z  - p0.z;
 
-    _linear_interpolation_ex(p0n.y, p0n.x, p2n.y, p2n.x, x02);
-    _linear_interpolation_ex(p0n.y, p0.z, p2n.y, p2.z, z02);
+    int16_t dy2 = p2n.y - p0n.y;
+    int16_t dx2 = p2n.x - p0n.x;
+    float_t dz2 = p2.z  - p0.z;
 
-    pop_back(x01);
-    pop_back(z01);
+    float_t dax_step = 0.0f;
+    float_t dbx_step = 0.0f;
+    float_t dz1_step = 0.0f;
+    float_t dz2_step = 0.0f;
 
-    list_f* z_segment = NULL;
-
-    for (uint16_t i = 0; i < x01->count; i++) {
-        append_el(x012, x01->data[i]);
+    if (dy1) {
+        dax_step = dx1 / (float_t)abs(dy1);
+        dz1_step = dz1 / (float_t)abs(dy1);
+    }
+    if (dy2) {
+        dbx_step = dx2 / (float_t)abs(dy2);
+        dz2_step = dz2 / (float_t)abs(dy2);
     }
 
-    for (uint16_t i = 0; i < x12->count; i++) {
-        append_el(x012, x12->data[i]);
-    }
+    if (dy1) {
 
-    for (uint16_t i = 0; i < z01->count; i++) {
-        append_el(z012, z01->data[i]);
-    }
+        for (int16_t i = p0n.y; i <= p1n.y; i++) {
 
-    for (uint16_t i = 0; i < z12->count; i++) {
-        append_el(z012, z12->data[i]);
-    }
+            int16_t ax = p0n.x + (float_t)(i - p0n.y) * dax_step;
+            int16_t bx = p0n.x + (float_t)(i - p0n.y) * dbx_step;
 
-    uint16_t mid = x012->count / 2;
+            float_t start_z = p0.z + (float_t)(i - p0n.y) * dz1_step;
+            float_t end_z = p0.z + (float_t)(i - p0n.y) * dz2_step;
 
-    if (x02->data[mid] < x012->data[mid]) {
+            if (ax > bx) {
+                int16_t x_temp = ax;
+                float_t z_temp = start_z;
+                ax = bx;
+                bx = x_temp;
 
-        // x_left = x02
-        // h_left = z02
-
-        // x_right = x012
-        // h_right = z012
-        
-        // x_l = x_left[y - y0]
-        // x_r = x_right[y - y0]
-
-        for (int16_t y = p0n.y; y < p2n.y; y++) {
-
-            z_segment = _linear_interpolation(x02->data[y - p0n.y], z02->data[y - p0n.y], 
-                                              x012->data[y - p0n.y], z012->data[y - p0n.y]);
-
-            for (int16_t x = (int16_t)x02->data[y - p0n.y]; x < x012->data[y - p0n.y]; x++) {
-                float_t z = z_segment->data[x - (int16_t)x02->data[y - p0n.y]];
-
-                if (z < buffer->z_buffer[x + buffer->width * y]) {
-                    buffer->z_buffer[x + y * buffer->width] = z;
-                    put_pixel(x, y, buffer, p_data);
-                }
+                start_z = end_z;
+                end_z = z_temp;
             }
+
+            z = start_z;
+
+            float_t t_step = 1.0f / ((float_t)(bx - ax));
+            float_t t = 0.0f;
+
+            for (int16_t j = ax; j < bx; j++) {
+
+                z = (1.0f - t) * start_z + t * end_z;
+
+                if (z < buffer->z_buffer[j + i * buffer->width]) {
+                    buffer->z_buffer[j + i * buffer->width] = z;
+                    put_pixel(j, i, buffer, p_data);
+                }
+
+                t += t_step;
+            }
+
         }
 
     }
-    else {
 
-        // x_left = x012
-        // h_left = h012
+    dy1 = p2n.y - p1n.y;
+    dx1 = p2n.x - p1n.x;
+    dz1 = p2.z  - p1.z;
 
-        // x_right = x02
-        // h_right = h02
+    dz1_step = 0.0f;
 
-        // x_l = x_left[y - y0]
-        // x_r = x_right[y - y0]
-
-        for (int16_t y = p0n.y; y < p2n.y; y++) {
-
-            z_segment = _linear_interpolation(x012->data[y - p0n.y], z012->data[y - p0n.y],
-                                              x02->data[y - p0n.y], z02->data[y - p0n.y]);
-
-            for (int16_t x = (int16_t)x012->data[y - p0n.y]; x < x02->data[y - p0n.y]; x++) {
-                float_t z = z_segment->data[x - (int16_t)x012->data[y - p0n.y]];
-
-                if (z < buffer->z_buffer[x + buffer->width * y]) {
-                    buffer->z_buffer[x + y * buffer->width] = z;
-                    put_pixel(x, y, buffer, p_data);
-                }
-            }
-        }
+    if (dy1) {
+        dax_step = dx1 / (float_t)abs(dy1);
+        dz1_step = dz1 / (float_t)abs(dy1);
+    }
+    if (dy2) {
+        dbx_step = dx2 / (float_t)abs(dy2);
     }
 
-    _zero_arrays_count();
+    if (dy1) {
+
+        for (int16_t i = p1n.y; i <= p2n.y; i++) {
+            int16_t ax = p1n.x + (float_t)(i - p1n.y) * dax_step;
+            int16_t bx = p0n.x + (float_t)(i - p0n.y) * dbx_step;
+
+            float_t start_z = p1.z + (float_t)(i - p1n.y) * dz1_step;
+            float_t end_z = p0.z + (float_t)(i - p0n.y) * dz2_step;
+
+            if (ax > bx) {
+                int16_t temp = ax;
+                float_t z_temp = start_z;
+                ax = bx;
+                bx = temp;
+                
+                start_z = end_z;
+                end_z = z_temp;
+            }
+
+            z = start_z;
+
+            float_t t_step = 1.0f / ((float_t)(bx - ax));
+            float_t t = 0.0f;
+
+            for (int16_t j = ax; j < bx; j++) {
+
+                z = (1.0f - t) * start_z + t * end_z;
+
+                if (z < buffer->z_buffer[j + i * buffer->width]) {
+                    buffer->z_buffer[j + i * buffer->width] = z;
+                    put_pixel(j, i, buffer, p_data);
+                }
+
+                t += t_step;
+            }
+
+        }
+
+    }
+
 }
 
 uint8_t triangle_clip_plane(vec3_f plane_p, vec3_f plane_n, triangle_d in_tri, triangle_d* out_tri1, triangle_d* out_tri2) {
@@ -825,7 +818,7 @@ void draw_cube(screen_buffer* buffer, float_t dt, vec3_f trans, mat4x4_f proj, v
 
         for (node* curr = q->head; curr != NULL; curr = curr->next) {
             triangle_d t = curr->el;
-            draw_triangle_depth_ex(t.p[0], t.p[1], t.p[2], t.color, buffer);
+            draw_triangle_depth_pro(t.p[0], t.p[1], t.p[2], t.color, buffer);
         }
 
         free_queue(q);
