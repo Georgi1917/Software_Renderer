@@ -55,6 +55,17 @@ list_f* init_list() {
 
 }
 
+list_f* init_list_size(uint16_t size) {
+    list_f* list = malloc(sizeof(list_f));
+
+    list->size = size;
+    list->count = 0;
+    list->data = calloc(list->size, sizeof(float_t));
+
+    return list;
+
+}
+
 void append_el(list_f* list, float_t el) {
     if (list->size <= list->count) {
         list->size *= 2;

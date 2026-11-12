@@ -22,6 +22,7 @@ typedef struct {
 } list_f;
 
 list_f* init_list();
+list_f* init_list_size(uint16_t size);
 void append_el(list_f* list, float_t el);
 void pop_back(list_f* list);
 void free_list(list_f* list);
