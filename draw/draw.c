@@ -112,65 +112,6 @@ list_f* _linear_interpolation(int16_t i0, float_t d0, int16_t i1, float_t d1) {
 
 }
 
-void _draw_line_high(int16_t x0, int16_t y0, int16_t x1, int16_t y1, pixel_data p_data, screen_buffer* buffer) {
-    int32_t dx = x1 - x0;
-    int32_t dy = y1 - y0;
-    int8_t xi = 1;
-
-    if (dx < 0) {
-        xi = -1;
-        dx = -dx;
-    }
-
-    int32_t D = (2 * dx) - dy;
-
-    int16_t x = x0;
-
-    for (int16_t y = y0; y <= y1; y++) {
-
-        put_pixel(x, y, buffer, p_data);
-
-        if (D > 0) {
-            x = x + xi;
-            D = D + (2 * (dx - dy));
-        }
-        else {
-            D = D + 2 * dx;
-        }
-
-    }
-
-}
-
-void _draw_line_low(int16_t x0, int16_t y0, int16_t x1, int16_t y1, pixel_data p_data, screen_buffer* buffer) {
-    int32_t dx = x1 - x0;
-    int32_t dy = y1 - y0;
-    int8_t yi = 1;
-
-    if (dy < 0) {
-        yi = -1;
-        dy = -dy;
-    }
-
-    int32_t D = (2 * dy) - dx;
-
-    int16_t y = y0;
-
-    for (int16_t x = x0; x <= x1; x++) {
-
-        put_pixel(x, y, buffer, p_data);
-
-        if (D > 0) {
-            y = y + yi;
-            D = D + (2 * (dy - dx));
-        }
-        else {
-            D = D + 2 * dy;
-        }
-
-    }
-}
-
 void _swap_points(vec2_i*a, vec2_i *b) {
 
     vec2_i temp = *a;
@@ -195,14 +136,48 @@ bool put_pixel(int16_t x, int16_t y, screen_buffer* buffer, pixel_data data) {
 }
 
 void draw_line(int16_t x0, int16_t y0, int16_t x1, int16_t y1, pixel_data p_data, screen_buffer* buffer) {
-    if (abs(y1 - y0) < abs(x1 - x0)) {
-        if (x0 > x1) _draw_line_low(x1, y1, x0, y0, p_data, buffer);
-        else _draw_line_low(x0, y0, x1, y1, p_data, buffer);
+    int16_t dx = 0;
+    if (x1 > x0) {
+        dx = x1 - x0;
     }
     else {
-        if (y0 > y1) _draw_line_high(x1, y1, x0, y0, p_data, buffer);
-        else _draw_line_high(x0, y0, x1, y1, p_data, buffer);
+        dx = x0 - x1;
     }
+
+    int16_t dy = 0;
+    if (y1 > y0) {
+        dy = y1 - y0;
+    }
+    else {
+        dy = y0 - y1;
+    }
+
+    int8_t sx = x0 < x1 ? 1 : -1;
+    int8_t sy = y0 < y1 ? 1 : -1;
+
+    int16_t err = (dx > dy ? dx : -dy) / 2;
+    int16_t e2 = 0;
+
+    while (1) {
+        put_pixel(x0, y0, buffer, p_data);
+        if (x0 == x1 && y0 == y1) {
+            break;
+        }
+
+        e2 = err;
+
+        if (e2 > -dx) {
+            err -= dy;
+            x0 += sx;
+        }
+
+        if (e2 < dy) {
+            err += dx;
+            y0 += sy;
+        }
+
+    }
+
 }
 
 void draw_line_p(vec2_f p0, vec2_f p1, pixel_data p_data, screen_buffer* buffer) {

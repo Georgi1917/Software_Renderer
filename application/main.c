@@ -101,7 +101,7 @@ int main(void)
 
     float_t prev = get_time();
     texture_t* tex = load_texture("assets/wall.jpg");
-    mesh_t* mesh = load_mesh("assets/teapot.obj");
+    mesh_t* mesh = load_mesh("assets/backpack.obj");
     pixel_data col = sample_color(tex, 1, 1);
 
     printf("Color : r %d g %d b %d\n", col.r, col.g, col.b);
@@ -211,9 +211,9 @@ int main(void)
 
         clear_buffer(DARKGRAY, back_buffer);
 
-        draw_cube(back_buffer, dt, (vec3_f){-7.0f, 0.0f, 5.0f}, proj, camera, camera_front);
-        draw_cube(back_buffer, dt, (vec3_f){7.0f, 0.0f, 5.0f}, proj, camera, camera_front);
-        draw_mesh(back_buffer, mesh, dt, (vec3_f){0.0f, 0.0f, 5.0f}, proj, camera, camera_front, WHITE);
+        draw_cube(back_buffer, dt, (vec3_f){0.0f, 0.0f, 5.0f}, proj, camera, camera_front);
+        draw_cube(back_buffer, dt, (vec3_f){5.0f, 0.0f, 5.0f}, proj, camera, camera_front);
+        // draw_mesh(back_buffer, mesh, dt, (vec3_f){0.0f, 0.0f, 5.0f}, proj, camera, camera_front, WHITE);
         printf("Time : %f\r", dt);
 
         if (!SDL_UpdateTexture(
