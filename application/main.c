@@ -211,9 +211,9 @@ int main(void)
 
         clear_buffer(DARKGRAY, back_buffer);
 
-        draw_cube(back_buffer, dt, (vec3_f){-7.0f, 0.0f, 5.0f}, proj, camera, camera_front);
-        draw_cube(back_buffer, dt, (vec3_f){7.0f, 0.0f, 5.0f}, proj, camera, camera_front);
-        draw_mesh(back_buffer, mesh, dt, (vec3_f){0.0f, 0.0f, 5.0f}, proj, camera, camera_front, WHITE);
+        draw_cube(back_buffer, dt, (vec3_f){-6.0f, 0.0f, 5.0f}, proj, camera, camera_front);
+        draw_cube(back_buffer, dt, (vec3_f){6.0f, 0.0f, 5.0f}, proj, camera, camera_front);
+        draw_mesh(back_buffer, mesh, dt, (vec3_f){0.0f, -1.0f, 5.0f}, proj, camera, camera_front, WHITE);
         printf("Time : %f\r", dt);
 
         if (!SDL_UpdateTexture(

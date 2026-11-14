@@ -122,7 +122,6 @@ void draw_triangle_wireframe(vec2_f p0, vec2_f p1, vec2_f p2, pixel_data p_data,
 }
 
 void draw_triangle_fill(vec2_f p0, vec2_f p1, vec2_f p2, pixel_data p_data, screen_buffer* buffer) {
-
     vec2_i p0n = _denormalize_point_coords(p0, buffer->width, buffer->height);
     vec2_i p1n = _denormalize_point_coords(p1, buffer->width, buffer->height);
     vec2_i p2n = _denormalize_point_coords(p2, buffer->width, buffer->height);
@@ -131,46 +130,73 @@ void draw_triangle_fill(vec2_f p0, vec2_f p1, vec2_f p2, pixel_data p_data, scre
     if (p2n.y < p0n.y) { _swap_points(&p2n, &p0n); }
     if (p2n.y < p1n.y) { _swap_points(&p2n, &p1n); }
 
-    list_f* x01 = _linear_interpolation(p0n.y, p0n.x, p1n.y, p1n.x);
-    list_f* x12 = _linear_interpolation(p1n.y, p1n.x, p2n.y, p2n.x);
-    list_f* x02 = _linear_interpolation(p0n.y, p0n.x, p2n.y, p2n.x);
+    int16_t dy1 = p1n.y - p0n.y;
+    int16_t dx1 = p1n.x - p0n.x;
 
-    pop_back(x01);
+    int16_t dy2 = p2n.y - p0n.y;
+    int16_t dx2 = p2n.x - p0n.x;
 
-    list_f* x012 = init_list();
+    float_t dax_step = 0.0f;
+    float_t dbx_step = 0.0f;
 
-    for (int i = 0; i < x01->count; i++) {
-        append_el(x012, x01->data[i]);
+    if (dy1) {
+        dax_step = dx1 / (float_t)abs(dy1);
+    }
+    if (dy2) {
+        dbx_step = dx2 / (float_t)abs(dy2);
     }
 
-    for (int i = 0; i < x12->count; i++) {
-        append_el(x012, x12->data[i]);
-    }
+    if (dy1) {
 
-    uint16_t mid = x012->count / 2;
+        for (int16_t i = p0n.y; i <= p1n.y; i++) {
 
-    if (x02->data[mid] < x012->data[mid]) {
+            int16_t ax = p0n.x + (float_t)(i - p0n.y) * dax_step;
+            int16_t bx = p0n.x + (float_t)(i - p0n.y) * dbx_step;
 
-        for (int16_t y = p0n.y; y < p2n.y; y++) {
-            for (int16_t x = (int16_t)x02->data[y - p0n.y]; x < x012->data[y - p0n.y]; x++) {
-                put_pixel(x, y, buffer, p_data);
+            if (ax > bx) {
+                int16_t x_temp = ax;
+                ax = bx;
+                bx = x_temp;
             }
+
+            for (int16_t j = ax; j < bx; j++) {
+                put_pixel(j, i, buffer, p_data);
+            }
+
         }
 
     }
-    else {
 
-        for (int16_t y = p0n.y; y < p2n.y; y++) {
-            for (int16_t x = (int16_t)x012->data[y - p0n.y]; x < x02->data[y - p0n.y]; x++) {
-                put_pixel(x, y, buffer, p_data);
-            }
-        }
+    dy1 = p2n.y - p1n.y;
+    dx1 = p2n.x - p1n.x;
+
+
+    if (dy1) {
+        dax_step = dx1 / (float_t)abs(dy1);
+    }
+    if (dy2) {
+        dbx_step = dx2 / (float_t)abs(dy2);
     }
 
-    free_list(x01);
-    free_list(x12);
-    free_list(x02);
-    free_list(x012);
+    if (dy1) {
+
+        for (int16_t i = p1n.y; i <= p2n.y; i++) {
+            int16_t ax = p1n.x + (float_t)(i - p1n.y) * dax_step;
+            int16_t bx = p0n.x + (float_t)(i - p0n.y) * dbx_step;
+
+            if (ax > bx) {
+                int16_t temp = ax;
+                ax = bx;
+                bx = temp;
+            }
+
+            for (int16_t j = ax; j < bx; j++) {
+                put_pixel(j, i, buffer, p_data);
+            }
+
+        }
+
+    }
 
 }
 
@@ -182,21 +208,15 @@ void draw_triangle_depth(vec3_f p0, vec3_f p1, vec3_f p2, pixel_data p_data, scr
 
     if (p1n.y < p0n.y) { 
         _swap_points(&p1n, &p0n);
-        float_t tmp = p1.z;
-        p1.z = p0.z;
-        p0.z = tmp; 
+        float_t tmp = p1.z; p1.z = p0.z; p0.z = tmp; 
     }
     if (p2n.y < p0n.y) { 
         _swap_points(&p2n, &p0n);
-        float_t tmp = p2.z;
-        p2.z = p0.z;
-        p0.z = tmp; 
+        float_t tmp = p2.z; p2.z = p0.z; p0.z = tmp; 
     }
     if (p2n.y < p1n.y) { 
         _swap_points(&p2n, &p1n);
-        float_t tmp = p2.z;
-        p2.z = p1.z;
-        p1.z = tmp; 
+        float_t tmp = p2.z; p2.z = p1.z; p1.z = tmp; 
     }
 
     float_t z = 0.0f;
@@ -575,6 +595,9 @@ void draw_cube(screen_buffer* buffer, float_t dt, vec3_f trans, mat4x4_f proj, v
         for (node_t* curr = q->head; curr != NULL; curr = curr->next) {
             triangle_d t = *(triangle_d*)curr->data;
             draw_triangle_depth(t.p[0], t.p[1], t.p[2], t.color, buffer);
+            // draw_triangle_fill((vec2_f){t.p[0].x, t.p[0].y}, 
+            //                    (vec2_f){t.p[1].x, t.p[1].y}, 
+            //                    (vec2_f){t.p[2].x, t.p[2].y}, t.color, buffer);
         }
 
         queue_free(q);
