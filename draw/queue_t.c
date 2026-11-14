@@ -1,22 +1,23 @@
 #include "queue_t.h"
 #include <stdio.h>
+#include <memory.h>
 
 node_t* create_node(void* data, uint32_t el_size) {
 
     node_t* to_insert = (node_t*)malloc(sizeof(node_t));
 
-    if (!to_insert) {
+    if (to_insert == NULL) {
         return NULL;
     }
 
     to_insert->data = malloc(el_size);
 
-    if (!to_insert->data) {
+    if (to_insert->data == NULL) {
         free(to_insert);
         return NULL;
     }
 
-    to_insert->data = data;
+    memcpy(to_insert->data, data, el_size);
     to_insert->next = NULL;
 
     return to_insert;
@@ -27,7 +28,7 @@ queue_t* queue_init(uint32_t el_size) {
 
     queue_t* q = (queue_t*)malloc(sizeof(queue_t));
 
-    if (!q) {
+    if (q == NULL) {
         return NULL;
     }
 
@@ -39,16 +40,16 @@ queue_t* queue_init(uint32_t el_size) {
 
 }
 
-void enqueue(void* data, queue_t* q) {
+void enqueue(queue_t* q, void* data) {
 
-    if (!data || !q) {
+    if ((data == NULL) || (q == NULL)) {
         printf("Invalid input data!\n");
         return;
     }
 
     node_t* to_insert = create_node(data, q->el_size);
 
-    if (!to_insert) {
+    if (to_insert == NULL) {
         printf("Failed to create node!\n");
         return;
     }
@@ -66,7 +67,7 @@ void enqueue(void* data, queue_t* q) {
 }
 
 void dequeue(queue_t* q) {
-    if (!q) {
+    if (q == NULL) {
         printf("Invalid input data!\n");
         return;
     }
@@ -93,7 +94,7 @@ void dequeue(queue_t* q) {
 }
 
 void queue_front(queue_t* q, void* data) {
-    if (!q || !data) {
+    if ((q == NULL) || (data == NULL)) {
         printf("Invalid input data!\n");
         return;
     }
@@ -102,7 +103,7 @@ void queue_front(queue_t* q, void* data) {
         return;
     }
 
-    data = q->head->data;
+    memcpy(data, q->head->data, q->el_size);
 
 }
 

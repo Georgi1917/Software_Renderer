@@ -17,7 +17,7 @@ typedef struct {
 } queue_t;
 
 queue_t* queue_init(uint32_t el_size);
-void enqueue(void* data, queue_t* q);
+void enqueue(queue_t* q, void* data);
 void dequeue(queue_t* q);
 void queue_front(queue_t* q, void* data);
 void queue_free(queue_t* q);

@@ -12,3 +12,4 @@ typedef struct {
 
 texture_t* load_texture(const char* filepath);
 pixel_data sample_color(texture_t* tex, uint16_t x, uint16_t y);
+void free_texture(texture_t* tex);

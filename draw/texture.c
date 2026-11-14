@@ -39,3 +39,8 @@ pixel_data sample_color(texture_t* tex, uint16_t x, uint16_t y) {
     return col;
 
 }
+
+void free_texture(texture_t* tex) {
+    free(tex->data);
+    free(tex);
+}
