@@ -1,4 +1,4 @@
-#include "texture.h"
+#include "texture_t.h"
 
 texture_t* load_texture(const char* filepath) {
     int num_channels = 0;
@@ -11,8 +11,8 @@ texture_t* load_texture(const char* filepath) {
         printf("Texture Loaded Successfully!\n");
         printf("Width : %d | Height : %d | Channels : %d\n", width, height, num_channels);
         tex->data = p_data;
-        tex->width = width;
-        tex->height = height;
+        tex->width = width - 1;
+        tex->height = height - 1;
         tex->channels = num_channels;
     }
     else {
@@ -24,13 +24,16 @@ texture_t* load_texture(const char* filepath) {
 
 }
 
-pixel_data sample_color(texture_t* tex, uint16_t x, uint16_t y) {
+pixel_data sample_color(texture_t* tex, float_t x, float_t y) {
     pixel_data col = {0};
 
+    uint16_t conv_x = x * (float_t)tex->width;
+    uint16_t conv_y = y * (float_t)tex->height;
+
     if (tex->channels == 3) {
-        col.r = tex->data[3 * (x + y * tex->width) + 0];
-        col.g = tex->data[3 * (x + y * tex->width) + 1];
-        col.b = tex->data[3 * (x + y * tex->width) + 2];
+        col.r = tex->data[3 * (conv_x + conv_y * tex->width) + 0];
+        col.g = tex->data[3 * (conv_x + conv_y * tex->width) + 1];
+        col.b = tex->data[3 * (conv_x + conv_y * tex->width) + 2];
     }
     else {
         printf("Invalid number of channels!\n");
