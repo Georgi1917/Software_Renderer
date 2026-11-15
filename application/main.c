@@ -100,10 +100,8 @@ int main(void)
     float_t f_pitch = 0.0f;
 
     float_t prev = get_time();
-    texture_t* tex = load_texture("assets/wall.jpg");
+    texture_t* tex = load_texture("assets/diamond_ore.jpg");
     mesh_t* mesh = load_mesh("assets/teapot.obj");
-    pixel_data col = sample_color(tex, 0.5f, 0.5f);
-    printf("Col : r: %d | g: %d | b: %d\n", col.r, col.g, col.b);
 
     while (running) {
 
@@ -213,7 +211,6 @@ int main(void)
         draw_cube(back_buffer, dt, (vec3_f){-6.0f, 0.0f, 5.0f}, proj, camera, camera_front);
         draw_cube(back_buffer, dt, (vec3_f){6.0f, 0.0f, 5.0f}, proj, camera, camera_front);
         draw_cube_tex(back_buffer, tex, (vec3_f){0.0f, 0.0f, 5.0f}, proj, camera, camera_front);
-        //exit(0);
         //draw_mesh(back_buffer, mesh, dt, (vec3_f){0.0f, -1.0f, 5.0f}, proj, camera, camera_front, WHITE);
         printf("Time : %f\r", dt);
 

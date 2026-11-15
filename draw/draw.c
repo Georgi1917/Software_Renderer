@@ -376,10 +376,6 @@ void draw_triangle_tex(vec3_f p0, vec3_f p1, vec3_f p2,
         float_t tmp = p2.z; p2.z = p1.z; p1.z = tmp; 
     }
 
-    printf("uv0 : %f | %f\n", uv0.x, uv0.y);
-    printf("uv1 : %f | %f\n", uv1.x, uv1.y);
-    printf("uv2 : %f | %f\n", uv2.x, uv2.y);
-
     float_t z = 0.0f;
 
     int16_t dy1 = p1n.y - p0n.y;
@@ -456,14 +452,9 @@ void draw_triangle_tex(vec3_f p0, vec3_f p1, vec3_f p2,
                 tex_u = (1.0f - t) * tex_su + t * tex_eu;
                 tex_v = (1.0f - t) * tex_sv + t * tex_ev;
 
-                // printf("tex_u : %f\n", tex_u);
-                // printf("tex_v : %f\n", tex_v);
-                // printf("z : %f\n", z);
-
                 if (z < buffer->z_buffer[j + i * buffer->width]) {
                     buffer->z_buffer[j + i * buffer->width] = z;
                     put_pixel(j, i, buffer, sample_color(tex, tex_u, tex_v));
-                    //put_pixel(j, i, buffer, (pixel_data){255, 255, 255});
                 }
 
                 t += t_step;
@@ -533,14 +524,9 @@ void draw_triangle_tex(vec3_f p0, vec3_f p1, vec3_f p2,
                 tex_u = (1.0f - t) * tex_su + t * tex_eu;
                 tex_v = (1.0f - t) * tex_sv + t * tex_ev;
 
-                // printf("tex_u : %f\n", tex_u);
-                // printf("tex_v : %f\n", tex_v);
-                // printf("z : %f\n", z);
-
                 if (z < buffer->z_buffer[j + i * buffer->width]) {
                     buffer->z_buffer[j + i * buffer->width] = z;
                     put_pixel(j, i, buffer, sample_color(tex, tex_u, tex_v));
-                    //put_pixel(j, i, buffer, (pixel_data){255, 255, 255});
                 }
 
                 t += t_step;

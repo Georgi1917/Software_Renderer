@@ -11,8 +11,8 @@ texture_t* load_texture(const char* filepath) {
         printf("Texture Loaded Successfully!\n");
         printf("Width : %d | Height : %d | Channels : %d\n", width, height, num_channels);
         tex->data = p_data;
-        tex->width = width - 1;
-        tex->height = height - 1;
+        tex->width = width;
+        tex->height = height;
         tex->channels = num_channels;
     }
     else {
@@ -29,6 +29,13 @@ pixel_data sample_color(texture_t* tex, float_t x, float_t y) {
 
     uint16_t conv_x = x * (float_t)tex->width;
     uint16_t conv_y = y * (float_t)tex->height;
+
+    if (conv_x == tex->width) {
+        conv_x--;
+    }
+    if (conv_y == tex->height) {
+        conv_y--;
+    }
 
     if (tex->channels == 3) {
         col.r = tex->data[3 * (conv_x + conv_y * tex->width) + 0];
